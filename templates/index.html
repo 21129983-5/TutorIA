@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutor Inteligente</title>
+    <style>
+        body {
+            background-color: #000000; /* Fundo preto */
+            color: #00e6e6; /* Texto azul claro */
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 300px;
+            border: 2px solid #00e6e6;
+            border-radius: 5px;
+            background-color: #333;
+            color: #00e6e6;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px; /* Espaçamento entre os botões */
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #00e6e6; /* Cor do botão azul claro */
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #00cccc; /* Mudança de cor ao passar o mouse */
+        }
+
+        #shutdown-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff4c4c; /* Cor do botão vermelho */
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 10px;
+        }
+
+        #shutdown-button:hover {
+            background-color: #ff1a1a; /* Mudança de cor ao passar o mouse */
+        }
+
+        #response_message {
+            position: relative;
+            margin-top: 20px;
+            padding: 15px;
+            width: 80%;
+            max-width: 600px;
+            height: 400px; /* Altura maior para a caixa de resposta */
+            border: 2px solid #00e6e6;
+            border-radius: 5px;
+            background-color: #222; /* Fundo escuro para a resposta */
+            color: #00e6e6; /* Texto azul claro */
+            overflow-y: auto; /* Barra de rolagem vertical */
+            white-space: pre-wrap; /* Preserva as quebras de linha */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #placeholder_text {
+            color: #777; /* Cor de texto mais clara para indicar placeholder */
+        }
+
+        #copy-button {
+            margin-top: 10px;
+            background-color: #00e6e6;
+            border: none;
+            color: #000;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #copy-button:hover {
+            background-color: #00cccc; /* Cor ao passar o mouse no botão de copiar */
+        }
+
+        #copy-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #00e6e6;
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Tutor Inteligente</h1>
+
+    <!-- Botão para encerrar a sessão -->
+    <button id="shutdown-button">Encerrar Sessão</button>
+
+    <form id="audio-form" method="POST" action="/send_message" enctype="multipart/form-data">
+        <input type="text" name="human_input" placeholder="Digite aqui" />
+        <div class="button-container">
+            <button type="button" id="start-recording">Iniciar Gravação</button>
+            <button type="button" id="stop-recording" disabled>Parar Gravação</button>
+            <button type="submit" id="send-message">Enviar Mensagem</button>
+        </div>
+        <input type="file" id="audio-input" name="audio_input" style="display: none;" />
+    </form>
+
+    <div id="response_message">
+        <span id="placeholder_text">Sua resposta será exibida aqui</span>
+    </div>
+
+    <!-- Botão para copiar a resposta -->
+    <button id="copy-button" title="Copiar resposta">Copiar Resposta 📋</button>
+
+    <!-- Notificação de cópia -->
+    <div id="copy-notification">Copiado.</div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        // Iniciar gravação de áudio
+        document.getElementById("start-recording").addEventListener("click", async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.start();
+            document.getElementById("start-recording").disabled = true;
+            document.getElementById("stop-recording").disabled = false;
+
+            mediaRecorder.addEventListener("dataavailable", event => {
+                audioChunks.push(event.data);
+            });
+
+            mediaRecorder.addEventListener("stop", () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+
+                const audioInput = document.getElementById("audio-input");
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(audioFile);
+                audioInput.files = dataTransfer.files;
+
+                document.getElementById("start-recording").disabled = false;
+                document.getElementById("stop-recording").disabled = true;
+
+                // Limpa os chunks após enviar
+                audioChunks = [];
+            });
+        });
+
+        // Parar gravação de áudio
+        document.getElementById("stop-recording").addEventListener("click", () => {
+            mediaRecorder.stop();
+        });
+
+        // Submeter o formulário
+        document.getElementById("audio-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            // Obtém os dados do formulário
+            const formData = new FormData(document.getElementById("audio-form"));
+            const response = await fetch("/send_message", {
+                method: "POST",
+                body: formData
+            });
+
+            // Exibe a resposta na página
+            if (response.ok) {
+                const message = await response.text();
+                document.getElementById("response_message").innerText = message;
+            } else {
+                document.getElementById("response_message").innerText = "Erro ao processar a mensagem.";
+            }
+
+            // Remove o placeholder depois da primeira resposta
+            const placeholder = document.getElementById("placeholder_text");
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            // Limpa o input de áudio após enviar
+            document.getElementById("audio-input").value = "";
+            // Limpa o campo de texto após enviar
+            document.querySelector('input[name="human_input"]').value = "";
+        });
+
+        // Função para copiar o texto da resposta
+        document.getElementById("copy-button").addEventListener("click", () => {
+            const responseMessage = document.getElementById("response_message").innerText;
+            navigator.clipboard.writeText(responseMessage).then(() => {
+                // Exibe notificação de cópia
+                const notification = document.getElementById("copy-notification");
+                notification.style.opacity = 1;
+                setTimeout(() => {
+                    notification.style.opacity = 0;
+                }, 1500);
+            }).catch(err => {
+                console.error("Erro ao copiar a resposta: ", err);
+            });
+        });
+
+        // Função para encerrar a sessão
+        document.getElementById("shutdown-button").addEventListener("click", async () => {
+            const response = await fetch("/shutdown", { method: "POST" });
+            if (response.ok) {
+                window.close();
+            } else {
+                alert("Erro ao encerrar a sessão.");
+            }
+        });
+    </script>
+</body>
+
+</html>
