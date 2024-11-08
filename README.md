@@ -24,10 +24,13 @@ Certifique-se de ter os seguintes pacotes e dependências instalados para execut
 - **ffmpeg**: Necessário para conversão de arquivos de áudio. [Instruções de instalação](https://ffmpeg.org/download.html).
 - **ElevenLabs API**: Para a reprodução de voz, crie uma conta em [ElevenLabs](https://www.elevenlabs.io/) e obtenha uma chave de API.
 
-Lembre-se de criar o arquivo .end e incluir as chaves da OpenAi e ElevenLabs. \n
-Exemplo:\n
-  OPENAI_API_KEY = "xxxxx"\n
-  ELEVEN_LABS_API_KEY = "xxxxx"\n
+Lembre-se de criar o arquivo .end e incluir as chaves da OpenAi e ElevenLabs.
+
+Exemplo:
+
+  OPENAI_API_KEY = "xxxxx"
+  
+  ELEVEN_LABS_API_KEY = "xxxxx"
 
 ## Configuração
 
