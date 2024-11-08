@@ -1,7 +1,3 @@
-Aqui está um exemplo de README.md para o projeto:
-
----
-
 # TutorIA: Assistente de Estudo para Crianças
 
 Este projeto implementa uma inteligência artificial (IA) conversacional projetada para auxiliar crianças de 6 anos em seus estudos, adotando uma abordagem pedagógica que incentiva o pensamento crítico, a autodescoberta e a reflexão. O TutorIA interage com a criança de maneira amigável e paciente, fornecendo dicas e encorajamento antes de revelar a resposta correta.
